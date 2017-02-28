@@ -1,21 +1,15 @@
-FROM ruby:2.3-alpine
+# escape=`
+FROM microsoft/windowsservercore
+SHELL ["powershell", "-Command"]
 
-MAINTAINER https://github.com/realestate-com-au/stackup
+RUN Set-ExecutionPolicy -ExecutionPolicy Bypass
+ENV chocolateyUseWindowsCompression false
+RUN iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex
+RUN choco feature enable -n allowEmptyChecksums
 
-RUN apk --no-cache add diffutils
-
-WORKDIR /app
-
-COPY bin /app/bin
-COPY lib /app/lib
-COPY spec /app/spec
-COPY README.md /app/
-COPY CHANGES.md /app/
-COPY stackup.gemspec /app/
-
-RUN gem build stackup.gemspec
-RUN gem install stackup-*.gem
-
-WORKDIR /cwd
+RUN choco install -y -r ruby
+RUN iwr https://curl.haxx.se/ca/cacert.pem -OutFile C:\\cacert.pem
+RUN [Environment]::SetEnvironmentVariable(\"SSL_CERT_FILE\", \"C:\\cacert.pem\", \"Machine\")
+RUN gem install --no-doc stackup -v 1.1.1
 
 ENTRYPOINT ["stackup"]
